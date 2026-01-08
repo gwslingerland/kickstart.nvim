@@ -710,7 +710,32 @@ require('lazy').setup({
             },
           },
         },
-        tinymist = {},
+
+        tinymist = {
+          on_attach = function(client, bufnr)
+            vim.keymap.set('n', '<leader>tp', function()
+              client:exec_cmd({
+
+                title = 'pin',
+
+                command = 'tinymist.pinMain',
+
+                arguments = { vim.api.nvim_buf_get_name(0) },
+              }, { bufnr = bufnr })
+            end, { desc = '[T]inymist [P]in', noremap = true })
+
+            vim.keymap.set('n', '<leader>tu', function()
+              client:exec_cmd({
+
+                title = 'unpin',
+
+                command = 'tinymist.pinMain',
+
+                arguments = { vim.v.null },
+              }, { bufnr = bufnr })
+            end, { desc = '[T]inymist [U]npin', noremap = true })
+          end,
+        },
       }
 
       -- Ensure the servers and tools above are installed
@@ -729,6 +754,7 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'typstyle',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -781,6 +807,7 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        typst = { 'typstyle' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -941,7 +968,7 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'typst' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
