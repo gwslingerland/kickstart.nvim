@@ -15,3 +15,6 @@ return {
     opts = {}, -- lazy.nvim will implicitly calls `setup {}`
   },
 }
+
+---@module 'lazy'
+---@type LazySpec
