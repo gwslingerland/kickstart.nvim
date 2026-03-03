@@ -697,21 +697,48 @@ require('lazy').setup({
         --
 
         lua_ls = {
-          -- cmd = { ... },
-          -- filetypes = { ... },
-          -- capabilities = {},
-          settings = {
-            Lua = {
-              completion = {
-                callSnippet = 'Replace',
+          on_init = function(client)
+            if client.workspace_folders then
+              local path = client.workspace_folders[1].name
+              if path ~= vim.fn.stdpath 'config' and (vim.uv.fs_stat(path .. '/.luarc.json') or vim.uv.fs_stat(path .. '/.luarc.jsonc')) then
+                return
+              end
+            end
+
+            client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
+              runtime = {
+                version = 'LuaJIT',
+                path = { 'lua/?.lua', 'lua/?/init.lua' },
               },
-              -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-              -- diagnostics = { disable = { 'missing-fields' } },
-            },
+              workspace = {
+                checkThirdParty = false,
+                -- NOTE: this is a lot slower and will cause issues when working on your own configuration.
+                --  See https://github.com/neovim/nvim-lspconfig/issues/3189
+                library = vim.tbl_extend('force', vim.api.nvim_get_runtime_file('', true), {
+                  '${3rd}/luv/library',
+                  '${3rd}/busted/library',
+                }),
+              },
+            })
+          end,
+          settings = {
+            Lua = {},
           },
         },
+        tinymist = {
+          on_attach = function(client, bufnr)
+            vim.keymap.set('n', 'm', function()
+              client:exec_cmd({
 
-        tinymist = {},
+                title = 'pin',
+
+                command = 'tinymist.pinMain',
+
+                arguments = { vim.api.nvim_buf_get_name(0) },
+              }, { bufnr = bufnr })
+            end, { desc = '[T]inymist [P]in', noremap = true })
+          end,
+        },
       }
 
       -- Ensure the servers and tools above are installed
@@ -731,6 +758,7 @@ require('lazy').setup({
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
         'typstyle',
+        'jq',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -784,6 +812,7 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         typst = { 'typstyle' },
+        json = { 'jq' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
